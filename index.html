@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Терминалы оплаты</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        .custom-popup {
+            min-width: 260px;
+        }
+
+        .popup-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--tg-theme-text-color, #1a1a2e);
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .popup-address {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #555);
+            margin-bottom: 6px;
+        }
+
+        .popup-hours {
+            font-size: 12px;
+            color: var(--tg-theme-link-color, #0a84ff);
+            margin-bottom: 12px;
+            padding: 4px 8px;
+            background: var(--tg-theme-secondary-bg-color, #e8f4ff);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
+        .btn-yandex {
+            background: linear-gradient(135deg, #fc3f1d 0%, #ff6b4a 100%);
+            color: white;
+        }
+
+        .btn-2gis {
+            background: linear-gradient(135deg, #2db83d 0%, #5fd36a 100%);
+            color: white;
+        }
+
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .leaflet-popup-tip {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .search-container {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            background: var(--tg-theme-bg-color, white);
+            color: var(--tg-theme-text-color, #000);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--tg-theme-hint-color, #999);
+        }
+
+        .filter-tabs {
+            position: fixed;
+            bottom: 70px;
+            left: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .filter-tab {
+            flex-shrink: 0;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--tg-theme-bg-color, white);
+            color: var(--tg-theme-text-color, #333);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .filter-tab.active {
+            background: var(--tg-theme-button-color, #0a84ff);
+            color: var(--tg-theme-button-text-color, white);
+        }
+
+        .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--tg-theme-bg-color, white);
+            padding: 12px 16px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .bottom-info {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+
+        .bottom-count {
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #333);
+        }
+
+        .locate-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: var(--tg-theme-button-color, #0a84ff);
+            color: var(--tg-theme-button-text-color, white);
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        #map {
+            padding-bottom: 60px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--tg-theme-bg-color, white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+            border-top-color: var(--tg-theme-button-color, #0a84ff);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Загрузка карты...</div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" id="search" placeholder="Поиск по адресу...">
+    </div>
+
+    <div id="map"></div>
+
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">Все</button>
+        <button class="filter-tab" data-filter="office">Офисы</button>
+        <button class="filter-tab" data-filter="granat">Гранат</button>
+        <button class="filter-tab" data-filter="rubl">Рубль</button>
+        <button class="filter-tab" data-filter="sto">СТО</button>
+        <button class="filter-tab" data-filter="24h">Круглосуточно</button>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="bottom-info">
+            Найдено: <span class="bottom-count" id="count">35</span> терминалов
+        </div>
+        <button class="locate-btn" id="locateBtn" title="Моё местоположение">
+            📍
+        </button>
+    </div>
+
+    <script>
+        // Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        // Терминалы (Краснодар)
+        const terminals = [
+            { address: "Ул. Московская, 81/1, 1 этаж, офис 109", hours: "Пн–Сб с 09:00 до 21:00", lat: 45.076235, lng: 38.999830, type: "office", h24: false },
+            { address: "Ул. Путевая, 7/1", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.044132, lng: 38.984078, type: "office", h24: false },
+            { address: "Ул. Автолюбителей, 31, 2 этаж, офис 3", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.002447, lng: 39.070039, type: "office", h24: false },
+            { address: "Ул. Волгоградская, 121 (СТО)", hours: "Пн–Сб c 09:00 до 19:00", lat: 45.089698, lng: 38.988636, type: "sto", h24: false },
+            { address: "Ул. Стасова 178/2 (Магазин Рубль)", hours: "Ежедневно с 8:00-21:00", lat: 45.012134, lng: 39.037192, type: "rubl", h24: false },
+            { address: "Пер. Гаражный 7/4 (Магазин Рубль)", hours: "Ежедневно с 8:00-21:00", lat: 45.087535, lng: 39.018681, type: "rubl", h24: false },
+            { address: "Ул. Вишняковой 1/23 к 2 (Магазин Гранат)", hours: "Ежедневно с 08:00-23:00", lat: 45.021623, lng: 38.998536, type: "granat", h24: false },
+            { address: "Ул. Автолюбителей 1/7 (Магазин Гранат)", hours: "Ежедневно с 08:00-23:00", lat: 44.999172, lng: 39.065799, type: "granat", h24: false },
+            { address: "Ул. Любимова 2 (Магазин Гранат)", hours: "Ежедневно с 08:00-23:00", lat: 45.087574, lng: 39.037980, type: "granat", h24: false },
+            { address: "Ул. Красных Партизан 1/4 корп. 15 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.064579, lng: 38.916556, type: "granat", h24: true },
+            { address: "Ул. Западный обход 65А (Магазин Гранат)", hours: "Круглосуточно", lat: 45.101719, lng: 38.912861, type: "granat", h24: true },
+            { address: "Ул. Покрышкина 2/3 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.102539, lng: 38.972799, type: "granat", h24: true },
+            { address: "Ул. Петра Метальникова 38 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.097540, lng: 39.002086, type: "granat", h24: true },
+            { address: "Ул. Селезнева 4/13 к 2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.027346, lng: 39.020832, type: "granat", h24: true },
+            { address: "Ул. Византийская 2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.112805, lng: 38.929186, type: "granat", h24: true },
+            { address: "Ул. Седина 9 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.037818, lng: 39.119057, type: "granat", h24: true },
+            { address: "Ул. Кубанская Набережная 37/11 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.024127, lng: 38.958103, type: "granat", h24: true },
+            { address: "Ул. Рашпилевская 333 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.067693, lng: 38.970907, type: "granat", h24: true },
+            { address: "Ул. Морская 11/1 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.055956, lng: 38.976605, type: "granat", h24: true },
+            { address: "Проспект Чекистов 25/2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.032506, lng: 38.915725, type: "granat", h24: true },
+            { address: "Ул. Старокубанская 2/23 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.003022, lng: 39.030918, type: "granat", h24: true },
+            { address: "Ул. Филатова 19 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.035715, lng: 39.015470, type: "granat", h24: true },
+            { address: "Ул. Героев Разведчиков 48 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.068360, lng: 39.033859, type: "granat", h24: true },
+            { address: "Ул. Николая Воробьева 11 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.062095, lng: 39.056629, type: "granat", h24: true },
+            { address: "Ул. Летчика Позднякова 2, строение Б (Магазин Гранат)", hours: "Круглосуточно", lat: 45.097951, lng: 39.059341, type: "granat", h24: true },
+            { address: "Ул. Артюшкова 27 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.064211, lng: 39.013826, type: "granat", h24: true },
+            { address: "Ул. Героя Пешкова 14 к2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.104338, lng: 38.951889, type: "granat", h24: true },
+            { address: "Ул. Тепличная 43 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.111712, lng: 39.026012, type: "granat", h24: true },
+            { address: "Ул. Измаильская 85 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.114111, lng: 39.048886, type: "granat", h24: true },
+            { address: "Ул. 40 лет Победы 33/4 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.058105, lng: 39.009581, type: "granat", h24: true },
+            { address: "Ул. Душистая 79 к1 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.141987, lng: 38.997852, type: "granat", h24: true },
+            { address: "Ул. Героя Ростовского 8В (Магазин Гранат)", hours: "Круглосуточно", lat: 45.098598, lng: 38.941401, type: "granat", h24: true },
+            { address: "Ул. Симферопольская 58/3 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.040404, lng: 39.090381, type: "granat", h24: true },
+            { address: "Ул. Профессора Малигонова 38А (Магазин Гранат)", hours: "Круглосуточно", lat: 45.152934, lng: 38.976573, type: "granat", h24: true },
+            { address: "Ул. 40 лет Победы 125 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.056270, lng: 39.031376, type: "granat", h24: true }
+        ];
+
+        const markerColors = {
+            office: '#fc3f1d',
+            granat: '#2db83d',
+            rubl: '#4285f4',
+            sto: '#ff9500'
+        };
+
+        let map;
+        let markers = [];
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Инициализация карты
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false
+            }).setView([45.0448, 38.9760], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OSM'
+            }).addTo(map);
+
+            // Контроль зума справа
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            renderMarkers();
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function createMarkerIcon(color, isFiltered = true) {
+            const opacity = isFiltered ? 1 : 0.3;
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    width: 32px;
+                    height: 32px;
+                    background: ${color};
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: ${opacity};
+                ">
+                    <div style="
+                        width: 10px;
+                        height: 10px;
+                        background: white;
+                        border-radius: 50%;
+                    "></div>
+                </div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+                popupAnchor: [0, -16]
+            });
+        }
+
+        function openYandexNav(lat, lng) {
+            // Пробуем открыть приложение
+            const yandexAppUrl = `yandexnavi://build_route_on_map?lat_to=${lat}&lon_to=${lng}`;
+            const yandexWebUrl = `https://yandex.ru/maps/?rtext=~${lat},${lng}&rtt=auto`;
+
+            // Для iOS/Android - пробуем intent
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+
+            if (isAndroid) {
+                window.location.href = `intent://build_route_on_map?lat_to=${lat}&lon_to=${lng}#Intent;scheme=yandexnavi;package=ru.yandex.yandexnavi;end`;
+            } else if (isIOS) {
+                window.location.href = yandexAppUrl;
+                setTimeout(() => window.open(yandexWebUrl, '_blank'), 1000);
+            } else {
+                window.open(yandexWebUrl, '_blank');
+            }
+        }
+
+        function open2GIS(lat, lng) {
+            const dgisAppUrl = `dgis://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}`;
+            const dgisWebUrl = `https://2gis.ru/krasnodar/directions/points/|${lng},${lat}`;
+
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+
+            if (isAndroid) {
+                window.location.href = `intent://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}#Intent;scheme=dgis;package=ru.dublgis.dgismobile;end`;
+            } else if (isIOS) {
+                window.location.href = dgisAppUrl;
+                setTimeout(() => window.open(dgisWebUrl, '_blank'), 1000);
+            } else {
+                window.open(dgisWebUrl, '_blank');
+            }
+        }
+
+        window.openYandexNav = openYandexNav;
+        window.open2GIS = open2GIS;
+
+        function shouldShowTerminal(terminal) {
+            // Фильтр по типу
+            if (currentFilter !== 'all') {
+                if (currentFilter === '24h' && !terminal.h24) return false;
+                if (currentFilter !== '24h' && terminal.type !== currentFilter) return false;
+            }
+
+            // Фильтр по поиску
+            if (searchQuery) {
+                return terminal.address.toLowerCase().includes(searchQuery.toLowerCase());
+            }
+
+            return true;
+        }
+
+        function renderMarkers() {
+            // Удаляем старые маркеры
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            let visibleCount = 0;
+
+            terminals.forEach(terminal => {
+                const isVisible = shouldShowTerminal(terminal);
+                if (isVisible) visibleCount++;
+
+                const marker = L.marker([terminal.lat, terminal.lng], {
+                    icon: createMarkerIcon(markerColors[terminal.type], isVisible)
+                }).addTo(map);
+
+                if (isVisible) {
+                    const popupContent = `
+                        <div class="custom-popup">
+                            <div class="popup-title">${terminal.address}</div>
+                            <div class="popup-hours">${terminal.hours}</div>
+                            <div class="nav-buttons">
+                                <button class="nav-btn btn-yandex" onclick="openYandexNav(${terminal.lat}, ${terminal.lng})">
+                                    <span class="nav-icon">🗺</span>
+                                    <span>Яндекс</span>
+                                </button>
+                                <button class="nav-btn btn-2gis" onclick="open2GIS(${terminal.lat}, ${terminal.lng})">
+                                    <span class="nav-icon">📍</span>
+                                    <span>2ГИС</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent, { maxWidth: 300 });
+                }
+
+                markers.push(marker);
+            });
+
+            document.getElementById('count').textContent = visibleCount;
+        }
+
+        // Фильтры
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                renderMarkers();
+            });
+        });
+
+        // Поиск
+        document.getElementById('search').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderMarkers();
+        });
+
+        // Геолокация
+        document.getElementById('locateBtn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        map.setView([latitude, longitude], 14);
+
+                        // Добавляем маркер текущего положения
+                        L.marker([latitude, longitude], {
+                            icon: L.divIcon({
+                                className: 'user-location',
+                                html: `<div style="
+                                    width: 20px;
+                                    height: 20px;
+                                    background: #007AFF;
+                                    border: 3px solid white;
+                                    border-radius: 50%;
+                                    box-shadow: 0 0 10px rgba(0,122,255,0.5);
+                                "></div>`,
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10]
+                            })
+                        }).addTo(map).bindPopup('Вы здесь').openPopup();
+                    },
+                    (error) => {
+                        alert('Не удалось определить местоположение');
+                    }
+                );
+            }
+        });
+
+        // Инициализация
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
