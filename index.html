@@ -371,36 +371,22 @@
         }
 
         function openYandexNav(lat, lng) {
-            // Пробуем открыть приложение
-            const yandexAppUrl = `yandexnavi://build_route_on_map?lat_to=${lat}&lon_to=${lng}`;
             const yandexWebUrl = `https://yandex.ru/maps/?rtext=~${lat},${lng}&rtt=auto`;
 
-            // Для iOS/Android - пробуем intent
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isAndroid = /Android/.test(navigator.userAgent);
-
-            if (isAndroid) {
-                window.location.href = `intent://build_route_on_map?lat_to=${lat}&lon_to=${lng}#Intent;scheme=yandexnavi;package=ru.yandex.yandexnavi;end`;
-            } else if (isIOS) {
-                window.location.href = yandexAppUrl;
-                setTimeout(() => window.open(yandexWebUrl, '_blank'), 1000);
+            // Используем Telegram WebApp API для открытия ссылок
+            if (window.Telegram?.WebApp?.openLink) {
+                Telegram.WebApp.openLink(yandexWebUrl);
             } else {
                 window.open(yandexWebUrl, '_blank');
             }
         }
 
         function open2GIS(lat, lng) {
-            const dgisAppUrl = `dgis://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}`;
             const dgisWebUrl = `https://2gis.ru/krasnodar/directions/points/|${lng},${lat}`;
 
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            const isAndroid = /Android/.test(navigator.userAgent);
-
-            if (isAndroid) {
-                window.location.href = `intent://2gis.ru/routeSearch/rsType/car/to/${lng},${lat}#Intent;scheme=dgis;package=ru.dublgis.dgismobile;end`;
-            } else if (isIOS) {
-                window.location.href = dgisAppUrl;
-                setTimeout(() => window.open(dgisWebUrl, '_blank'), 1000);
+            // Используем Telegram WebApp API для открытия ссылок
+            if (window.Telegram?.WebApp?.openLink) {
+                Telegram.WebApp.openLink(dgisWebUrl);
             } else {
                 window.open(dgisWebUrl, '_blank');
             }
