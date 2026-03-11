@@ -33,7 +33,7 @@
         .popup-title {
             font-weight: 600;
             font-size: 14px;
-            color: #1a1a2e;
+            color: var(--tg-theme-text-color, #1a1a2e);
             margin-bottom: 8px;
             line-height: 1.3;
         }
@@ -46,10 +46,10 @@
 
         .popup-hours {
             font-size: 12px;
-            color: #0a84ff;
+            color: var(--tg-theme-link-color, #0a84ff);
             margin-bottom: 12px;
             padding: 4px 8px;
-            background: #e8f4ff;
+            background: var(--tg-theme-secondary-bg-color, #e8f4ff);
             border-radius: 4px;
             display: inline-block;
         }
@@ -258,7 +258,7 @@
 
     <div class="bottom-panel">
         <div class="bottom-info">
-            Найдено: <span class="bottom-count" id="count">35</span> терминалов
+            Найдено: <span class="bottom-count" id="count">37</span> терминалов
         </div>
         <button class="locate-btn" id="locateBtn" title="Моё местоположение">
             📍
@@ -276,7 +276,7 @@
         // Терминалы (Краснодар)
         const terminals = [
             { address: "Ул. Московская, 81/1, 1 этаж, офис 109", hours: "Пн–Сб с 09:00 до 21:00", lat: 45.076235, lng: 38.999830, type: "office", h24: false },
-            { address: "Ул. Путевая, 7/1", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.044132, lng: 38.984078, type: "office", h24: false },
+            { address: "Ул. Путевая, 1", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.044367, lng: 38.981777, type: "office", h24: false },
             { address: "Ул. Автолюбителей, 31, 2 этаж, офис 3", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.002447, lng: 39.070039, type: "office", h24: false },
             { address: "Ул. Волгоградская, 121 (СТО)", hours: "Пн–Сб c 09:00 до 19:00", lat: 45.089698, lng: 38.988636, type: "sto", h24: false },
             { address: "Ул. Стасова 178/2 (Магазин Рубль)", hours: "Ежедневно с 8:00-21:00", lat: 45.012134, lng: 39.037192, type: "rubl", h24: false },
@@ -290,11 +290,9 @@
             { address: "Ул. Петра Метальникова 38 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.097540, lng: 39.002086, type: "granat", h24: true },
             { address: "Ул. Селезнева 4/13 к 2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.027346, lng: 39.020832, type: "granat", h24: true },
             { address: "Ул. Византийская 2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.112805, lng: 38.929186, type: "granat", h24: true },
-            { address: "Ул. Седина 9 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.037818, lng: 39.119057, type: "granat", h24: true },
             { address: "Ул. Кубанская Набережная 37/11 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.024127, lng: 38.958103, type: "granat", h24: true },
             { address: "Ул. Рашпилевская 333 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.067693, lng: 38.970907, type: "granat", h24: true },
             { address: "Ул. Морская 11/1 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.055956, lng: 38.976605, type: "granat", h24: true },
-            { address: "Проспект Чекистов 25/2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.032506, lng: 38.915725, type: "granat", h24: true },
             { address: "Ул. Старокубанская 2/23 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.003022, lng: 39.030918, type: "granat", h24: true },
             { address: "Ул. Филатова 19 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.035715, lng: 39.015470, type: "granat", h24: true },
             { address: "Ул. Героев Разведчиков 48 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.068360, lng: 39.033859, type: "granat", h24: true },
@@ -308,8 +306,12 @@
             { address: "Ул. Душистая 79 к1 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.141987, lng: 38.997852, type: "granat", h24: true },
             { address: "Ул. Героя Ростовского 8В (Магазин Гранат)", hours: "Круглосуточно", lat: 45.098598, lng: 38.941401, type: "granat", h24: true },
             { address: "Ул. Симферопольская 58/3 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.040404, lng: 39.090381, type: "granat", h24: true },
-            { address: "Ул. Профессора Малигонова 38А (Магазин Гранат)", hours: "Круглосуточно", lat: 45.152934, lng: 38.976573, type: "granat", h24: true },
-            { address: "Ул. 40 лет Победы 125 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.056270, lng: 39.031376, type: "granat", h24: true }
+            { address: "Ул. 40 лет Победы 125 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.056270, lng: 39.031376, type: "granat", h24: true },
+            { address: "Ул. Береговая 2 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.000055, lng: 38.957357, type: "granat", h24: true },
+            { address: "Ул. Красных Партизан 1/4 к22", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.080187, lng: 38.891738, type: "office", h24: false },
+            { address: "Ул. Минская 122/6 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.038322, lng: 38.936172, type: "granat", h24: true },
+            { address: "Мирный проезд 14/1 (Магазин Гранат)", hours: "Круглосуточно", lat: 45.064858, lng: 38.892303, type: "granat", h24: true },
+            { address: "Ул. им. Лазарева 1/1, мкр. 2-я Площадка", hours: "Пн–Пт с 10:00 до 18:00", lat: 45.091445, lng: 38.976308, type: "office", h24: false }
         ];
 
         const markerColors = {
